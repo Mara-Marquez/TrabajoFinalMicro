@@ -1,22 +1,18 @@
-#include "Ventilador.h"
-#include "PWM.h"
-#include <Arduino.h>
+#include "ventilador.h"
 
-#define MAXTEMP 30.0
-PWM controlPWM;
+#define MAXTEMP 31.0
+
 Ventilador::Ventilador(int pin)
+    : pin(pin), controlPWM(pin)
 {
-    this->pin = pin;
 }
 
 void Ventilador::iniciar()
 {
-   
     controlPWM.iniciar();
 }
 
-int Ventilador::controlar(float temperatura,
-                          float setpoint)
+int Ventilador::controlar(float temperatura, float setpoint)
 {
     int pwm;
 
@@ -29,10 +25,9 @@ int Ventilador::controlar(float temperatura,
         pwm = map(
             (int)(temperatura * 10),
             (int)(setpoint * 10),
-            MAXTEMP * 10,
+            (int)(MAXTEMP * 10),
             80,
-            255
-        );
+            255);
 
         pwm = constrain(pwm, 80, 255);
     }

@@ -1,28 +1,34 @@
-#include "potenciometro.h"
-#include "ADC.h"
+#include "Potenciometro.h"
 #include <Arduino.h>
 
-#define MINTEMP 20.0
+#define MINTEMP 22.0
 #define MAXTEMP 30.0
-ADCManager adc;
-
-
-void Potenciometro::iniciar()
-{
-    adc.iniciar();
-}
 
 Potenciometro::Potenciometro(int pin)
 {
     this->pin = pin;
 }
 
-float Potenciometro::obtenerSetpoint()
+void Potenciometro::iniciar()
 {
-    int valor = adc.leer(3);
+    pinMode(pin, INPUT);
+}
 
-    //Serial.print("ADC = ");
-    //Serial.println(valor);
-    return MINTEMP +
+int Potenciometro::obtenerValor()
+{
+    return analogRead(pin);
+}
+
+int Potenciometro::obtenerPWM()
+{
+    int valorPOT = analogRead(pin);
+    return map(valorPOT, 0, 1023, 0, 255);
+}
+
+int Potenciometro::obtenerSetpoint()
+{
+    int valor = analogRead(pin);
+
+      return MINTEMP +
            (valor * (MAXTEMP - MINTEMP) / 1023.0);
 }

@@ -1,4 +1,4 @@
-#include "Pantalla.h"
+#include "pantalla.h"
 #include <Wire.h>
 
 #define SCREEN_WIDTH 128

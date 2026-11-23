@@ -1,6 +1,6 @@
 
 
-#include "Temperatura.h"
+#include "dh11.h"
 
 Temperatura::Temperatura(uint8_t pin)
 : dht(pin, DHT11)
