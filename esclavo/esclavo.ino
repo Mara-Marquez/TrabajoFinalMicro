@@ -8,7 +8,7 @@
 #define SLAVE_ADDR 8
 Temperatura sensorTemp(2);
 Potenciometro pot(A3);
-Pantalla pantalla;
+
 Ventilador ventilador(9);
 struct DatosSistema
 {
@@ -17,26 +17,25 @@ struct DatosSistema
     int rpm;
     int pwm;
 };
-void enviarDatos()
-{
-    Wire.write(
-        (byte*)&datos,
-        sizeof(datos)
-    );
-}
+DatosSistema datos;
+
+
 
 void setup()
 {
     Wire.begin(SLAVE_ADDR);
 
-Wire.onRequest(enviarDatos);
+Wire.onReceive(receiveEvent);
+Wire.onRequest(requestEvent);
+
+
  Serial.begin(9600);
  sensorTemp.iniciar();
-  pot.iniciar();
+pot.iniciar();
  
-   ventilador.iniciar();
+ventilador.iniciar();
 
-  
+  Serial.println("Esclavo iniciado");
     
 }
 void loop()
@@ -60,8 +59,44 @@ int porcentajePWM =
 
 datos.temperatura = temperatura;
 datos.setpoint = setpoint;
-datos.rpm = rpm;
+datos.rpm = 0;
 datos.pwm = porcentajePWM;
 
 
+}
+
+
+void requestEvent()
+{
+    Wire.write(
+        (byte*)&datos,
+        sizeof(DatosSistema)
+    );
+
+    Serial.print("Enviado -> ");
+    Serial.print(datos.temperatura);
+    Serial.print(" ");
+    Serial.print(datos.setpoint);
+    Serial.print(" ");
+    Serial.print(datos.rpm);
+    Serial.print(" ");
+    Serial.println(datos.pwm);
+}
+
+void receiveEvent(int bytes)
+{
+    if(bytes == sizeof(float))
+    {
+        float nuevoSP;
+
+        Wire.readBytes(
+            (char*)&nuevoSP,
+            sizeof(float)
+        );
+
+        datos.setpoint = nuevoSP;
+
+        Serial.print("Nuevo Setpoint: ");
+        Serial.println(datos.setpoint);
+    }
 }
