@@ -1,29 +1,42 @@
 //Librerias
 #include "dh11.h"
 #include "potenciometro.h"
-#include "pantalla.h"
 #include "ventilador.h"
-
+#include <Wire.h>
 
 //variables
+#define SLAVE_ADDR 8
 Temperatura sensorTemp(2);
 Potenciometro pot(A3);
 Pantalla pantalla;
 Ventilador ventilador(9);
-
+struct DatosSistema
+{
+    float temperatura;
+    float setpoint;
+    int rpm;
+    int pwm;
+};
+void enviarDatos()
+{
+    Wire.write(
+        (byte*)&datos,
+        sizeof(datos)
+    );
+}
 
 void setup()
 {
+    Wire.begin(SLAVE_ADDR);
+
+Wire.onRequest(enviarDatos);
  Serial.begin(9600);
  sensorTemp.iniciar();
   pot.iniciar();
-  pantalla.iniciar();
+ 
    ventilador.iniciar();
 
-    pantalla.mostrarMensaje(
-        "Iniciando Sistema",
-        "OK..."
-    );
+  
     
 }
 void loop()
@@ -44,12 +57,11 @@ Serial.println(setpoint);
 int porcentajePWM =
     (pwm * 100) / 255;
 
-pantalla.mostrarDatos(
-    temperatura,
-    setpoint,
-    porcentajePWM,
-    0
-    
-);
+
+datos.temperatura = temperatura;
+datos.setpoint = setpoint;
+datos.rpm = rpm;
+datos.pwm = porcentajePWM;
+
 
 }
