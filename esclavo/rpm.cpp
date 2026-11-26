@@ -1,48 +1,47 @@
 #include "rpm.h"
 
-SensorRPM::SensorRPM(int pinLed, int pinAnalogico) {
-  pinLedIR = pinLed;
-  pinSensor = pinAnalogico;
-  umbralLuz = 450;             // Umbral para separar luz de sombra
-  intervaloVentana = 3000;     // Ventana de medición de 3 segundos
-  tiempoAnterior = 0;
-  contadorFlancos = 0;
-  estadoAnteriorAlto = false;
-  rpmActual = 0;
+const int pinSensor = 3;
+const uint8_t PULSOS_POR_VUELTA = 7;
+
+volatile uint32_t pulsos = 0;
+
+void contarPulso()
+{
+    pulsos++;
 }
 
-void SensorRPM::iniciar() {
-  pinMode(pinLedIR, OUTPUT);
-  digitalWrite(pinLedIR, HIGH); // Enciende el LED infrarrojo permanentemente
 
-  // Sincronización inicial del estado del sensor
-  int valorInicial = analogRead(pinSensor);
-  estadoAnteriorAlto = (valorInicial > umbralLuz);
-  tiempoAnterior = millis();
+void RPM::iniciar()
+{
+    pinMode(pinSensor, INPUT);
+
+    attachInterrupt(
+        digitalPinToInterrupt(pinSensor),
+        contarPulso,
+        FALLING
+    );
+      static unsigned long tiempoAnterior = 0;
 }
 
-int SensorRPM::calcular() {
-  digitalWrite(pinLedIR, HIGH);
 
-  int valorActual = analogRead(pinSensor);
-  bool estadoActualAlto = (valorActual > umbralLuz);
+void RPM::actualizar()
+{
+  
 
-  // Detecta cada cambio de estado (interrupción o liberación del haz)
-  if (estadoActualAlto != estadoAnteriorAlto) {
-    contadorFlancos++;
-    estadoAnteriorAlto = estadoActualAlto;
-  }
+    if (millis() - tiempoAnterior >= 1000)
+    {
+        noInterrupts();
+        uint32_t pulsosSegundo = pulsos;
+        pulsos = 0;
+        interrupts();
 
-  // Cada 3 segundos actualiza el cálculo de RPM sin bloquear el loop
-  unsigned long tiempoActual = millis();
-  if (tiempoActual - tiempoAnterior >= intervaloVentana) {
-    // 7 aspas = 14 flancos por vuelta; proyección de 3s a 60s (* 20)
-    float revoluciones = (float)contadorFlancos / 14.0;
-    rpmActual = (int)(revoluciones * 20.0);
+        rpm = (pulsosSegundo * 60.0) / PULSOS_POR_VUELTA;
 
-    contadorFlancos = 0;
-    tiempoAnterior = tiempoActual;
-  }
+        tiempoAnterior = millis();
+    }
+}
 
-  return rpmActual;
+float RPM::obtenerRPM()
+{
+    return rpm;
 }

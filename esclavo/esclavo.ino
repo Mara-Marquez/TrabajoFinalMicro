@@ -13,12 +13,13 @@ Potenciometro pot(A3);
 Watchdog watchdog;
 Ventilador ventilador(9);
 SensorRPM sensorRPM(4, A0);
+RPM rpm;
 
 struct DatosSistema
 {
     float temperatura;
     float setpoint;
-    int rpm;
+    float rpm;
     int pwm;
     bool ONOF;
 };
@@ -41,6 +42,8 @@ void setup()
   
     watchdog.iniciar(); 
     Serial.println("Esclavo iniciado");
+
+    rpm.iniciar();
 }
 
 void loop()
@@ -54,6 +57,8 @@ void loop()
         delay(1000);
         watchdog.reiniciarSistema();
     }
+    rpm.actualizar();
+    rpm.obtenerRPM();
 
     float setpoint = pot.obtenerSetpoint();
 
@@ -72,7 +77,7 @@ void loop()
 
     datos.temperatura = temperatura;
     datos.setpoint = setpoint;
-    datos.rpm = sensorRPM.calcular();
+    datos.rpm = rpm.obtenerRPM();
     datos.pwm = porcentajePWM;
     datos.ONOF = onof;
 }

@@ -2,22 +2,19 @@
 #define RPM_H
 
 #include <Arduino.h>
+#include <Arduino.h>
 
-class SensorRPM {
-  private:
-    int pinLedIR;
-    int pinSensor;
-    int umbralLuz;
-    unsigned long tiempoAnterior;
-    unsigned long intervaloVentana;
-    int contadorFlancos;
-    bool estadoAnteriorAlto;
-    int rpmActual;
-
-  public:
-    SensorRPM(int pinLed, int pinAnalogico);
+class Tacometro
+{
+public:
     void iniciar();
-    int calcular();
+    void actualizar();
+    float obtenerRPM();
+
+private:
+    int rpm = 0;
 };
+
+extern volatile uint32_t pulsos;
 
 #endif
