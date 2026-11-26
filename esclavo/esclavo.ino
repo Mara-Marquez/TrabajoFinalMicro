@@ -4,6 +4,7 @@
 #include "ventilador.h"
 #include <Wire.h>
 #include "Watchdog.h"
+#include <avr/interrupt.h>
 
 //variables
 #define SLAVE_ADDR 8
@@ -62,11 +63,7 @@ float setpoint =
  int pwm = ventilador.controlar(temperatura, setpoint);
 
 
-Serial.print("temperatura: ");
-Serial.println(temperatura);
 
-Serial.print("Setpoint: ");
-Serial.println(setpoint);
 int porcentajePWM =
     (pwm * 100) / 255;
     bool onof=false;
@@ -76,14 +73,14 @@ onof=true;
 else{
     onof=false;
 }
-
+cli();
 
 datos.temperatura = temperatura;
 datos.setpoint = setpoint;
 datos.rpm = 0;
 datos.pwm = porcentajePWM;
 datos.ONOF =onof;
-
+sei();
 
 }
 
@@ -94,7 +91,7 @@ void requestEvent()
         (byte*)&datos,
         sizeof(DatosSistema)
     );
-
+/*
     Serial.print("Enviado -> ");
     Serial.print(datos.temperatura);
     Serial.print(" ");
@@ -103,6 +100,7 @@ void requestEvent()
     Serial.print(datos.rpm);
     Serial.print(" ");
     Serial.println(datos.pwm);
+    */
 }
 
 void receiveEvent(int bytes)
@@ -118,7 +116,7 @@ void receiveEvent(int bytes)
 
         datos.setpoint = nuevoSP;
 
-        Serial.print("Nuevo Setpoint: ");
-        Serial.println(datos.setpoint);
+       // Serial.print("Nuevo Setpoint: ");
+      //  Serial.println(datos.setpoint);
     }
 }

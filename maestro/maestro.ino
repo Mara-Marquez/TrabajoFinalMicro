@@ -13,7 +13,7 @@ struct DatosSistema
 };
 
 DatosSistema datos;
-
+String command;
 Pantalla pantalla;
 
 void solicitarDatos()
@@ -24,8 +24,8 @@ void solicitarDatos()
             sizeof(DatosSistema)
         );
 
-    Serial.print("Bytes recibidos: ");
-    Serial.println(recibidos);
+   // Serial.print("Bytes recibidos: ");
+   // Serial.println(recibidos);
 
     if (recibidos == sizeof(DatosSistema))
     {
@@ -50,6 +50,8 @@ void enviarSetpoint(float nuevoSP)
 
 void mostrarSerial()
 {
+    String estado="";
+     Serial.println("-------------------------");
     Serial.print("Temp: ");
     Serial.print(datos.temperatura);
 
@@ -60,7 +62,17 @@ void mostrarSerial()
     Serial.print(datos.rpm);
 
     Serial.print(" PWM: ");
-    Serial.println(datos.pwm);
+    Serial.print(datos.pwm);
+if(datos.onof){
+    estado="ON";
+
+}else{ estado="OFF"; }
+     
+
+     Serial.print(" Estado: ");
+
+    Serial.println(estado);
+    Serial.println("-------------------------");
 }
 
 void setup()
@@ -80,7 +92,7 @@ void setup()
         "Iniciando"
     );
 
-    delay(2000);
+    delay(200);
 }
 
 void loop()
@@ -89,7 +101,7 @@ void loop()
     solicitarDatos();
 
     // Los muestra
-    mostrarSerial();
+   // mostrarSerial();
 
     pantalla.mostrarDatos(
         datos.temperatura,
@@ -99,14 +111,23 @@ void loop()
         datos.onof
     );
 
-    // Calcula un nuevo setpoint
-    float nuevoSP = datos.setpoint + 1.0;
+   
 
     // Lo envía al esclavo
-    enviarSetpoint(nuevoSP);
+if (Serial.available())
+	{
+    	command = Serial.readStringUntil('\n');
+    	command.trim();
+    	if (command.equalsIgnoreCase("A"))
+    	{
+        	solicitarDatos();
+        	mostrarSerial();
+    	}
+	}
+	
 
-    Serial.print("Nuevo SP enviado: ");
-    Serial.println(nuevoSP);
 
-    delay(3000);
+    
+
+   
 }
