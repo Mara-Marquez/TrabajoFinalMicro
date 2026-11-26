@@ -12,7 +12,7 @@ Temperatura sensorTemp(2);
 Potenciometro pot(A3);
 Watchdog watchdog;
 Ventilador ventilador(9);
-SensorRPM sensorRPM(4, A0);
+SensorRPM sensorRPM(4, 3);
 
 struct DatosSistema
 {
@@ -24,7 +24,7 @@ struct DatosSistema
 };
 
 DatosSistema datos;
-bool = false;    
+bool modoManual = false;    
 
 void setup()
 {
@@ -70,18 +70,21 @@ void loop()
     int porcentajePWM = (pwm * 100) / 255;
     bool onof = (porcentajePWM > 0);
 
+    noInterrupts();
     datos.temperatura = temperatura;
     datos.setpoint = setpoint;
     datos.rpm = sensorRPM.calcular();
     datos.pwm = porcentajePWM;
     datos.ONOF = onof;
+    interrupts();
+    Serial.println(datos.pwm);
 }
 
 void requestEvent()
 {
     Wire.write(
-        (byte*)&datos,
-        sizeof(DatosSistema)
+        (uint8_t*)&datos,
+        sizeof(datos)
     );
 }
 

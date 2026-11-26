@@ -3,19 +3,23 @@
 
 #include <Arduino.h>
 
-class SensorRPM {
-  private:
+class SensorRPM
+{
+private:
     int pinLedIR;
     int pinSensor;
-    int umbralLuz;
+
+    static volatile unsigned long contadorFlancos;
+
     unsigned long tiempoAnterior;
     unsigned long intervaloVentana;
-    int contadorFlancos;
-    bool estadoAnteriorAlto;
     int rpmActual;
 
-  public:
-    SensorRPM(int pinLed, int pinAnalogico);
+    static void contarPulso();
+
+public:
+    SensorRPM(int pinLed, int pinSensor);
+
     void iniciar();
     int calcular();
 };
