@@ -12,7 +12,8 @@ Temperatura sensorTemp(2);
 Potenciometro pot(A3);
 Watchdog watchdog;
 Ventilador ventilador(9);
-SensorRPM sensorRPM(4, 7);
+SensorRPM sensorRPM(4, A0);
+
 struct DatosSistema
 {
     float temperatura;
@@ -21,47 +22,42 @@ struct DatosSistema
     int pwm;
     bool ONOF;
 };
-DatosSistema datos;
-bool modoManual = false;    
 
+DatosSistema datos;
+bool = false;    
 
 void setup()
 {
     Wire.begin(SLAVE_ADDR);
 
-Wire.onReceive(receiveEvent);
-Wire.onRequest(requestEvent);
+    Wire.onReceive(receiveEvent);
+    Wire.onRequest(requestEvent);
 
-
- Serial.begin(9600);
- sensorTemp.iniciar();
-pot.iniciar();
- 
-ventilador.iniciar();
-sensorRPM.iniciar();
+    Serial.begin(9600);
+    sensorTemp.iniciar();
+    pot.iniciar();
+    ventilador.iniciar();
+    sensorRPM.iniciar();
   
-   watchdog.iniciar(); 
-   Serial.println("Esclavo iniciado");
+    watchdog.iniciar(); 
+    Serial.println("Esclavo iniciado");
 }
+
 void loop()
 {
     watchdog.reset();
- float temperatura =
-        sensorTemp.leer();
+    float temperatura = sensorTemp.leer();
 
- if (isnan(temperatura))
-{
-  Serial.println("Reiniciando");
+    if (isnan(temperatura))
+    {
+        Serial.println("Reiniciando");
+        delay(1000);
+        watchdog.reiniciarSistema();
+    }
 
-    delay(1000);
+    float setpoint = pot.obtenerSetpoint();
 
-    watchdog.reiniciarSistema();
-}
-
-float setpoint =
-        pot.obtenerSetpoint();
-
- int pwm = 0;
+    int pwm = 0;
     if (modoManual)
     {
         pwm = ventilador.controlar(50.0, 10.0); 
@@ -71,25 +67,15 @@ float setpoint =
         pwm = ventilador.controlar(temperatura, setpoint);
     }
 
-int porcentajePWM =
-    (pwm * 100) / 255;
-    bool onof=false;
-if(porcentajePWM>0){
-onof=true;
+    int porcentajePWM = (pwm * 100) / 255;
+    bool onof = (porcentajePWM > 0);
+
+    datos.temperatura = temperatura;
+    datos.setpoint = setpoint;
+    datos.rpm = sensorRPM.calcular();
+    datos.pwm = porcentajePWM;
+    datos.ONOF = onof;
 }
-else{
-    onof=false;
-}
-
-datos.temperatura = temperatura;
-datos.setpoint = setpoint;
-datos.rpm = sensorRPM.calcular(); //Aqui va la lectura de RPM cuando este el sensor IR
-datos.pwm = porcentajePWM;
-datos.ONOF =onof;
-
-
-}
-
 
 void requestEvent()
 {
@@ -101,7 +87,7 @@ void requestEvent()
 
 void receiveEvent(int bytes)
 {
-    if(bytes == sizeof(bool))
+    if (bytes == sizeof(bool))
     {
         Wire.readBytes(
             (char*)&modoManual,
@@ -110,14 +96,12 @@ void receiveEvent(int bytes)
 
         Serial.print("Modo Manual: ");
         Serial.println(modoManual ? "ACTIVADO (Forzado ON)" : "DESACTIVADO (Automatico)");
-    
     }
-        else
+    else
+    {
+        while (Wire.available())
         {
-            // Limpia cualquier byte extra del buffer I2C para que nunca se bloquee
-            while (Wire.available())
-            {
-                Wire.read();
-            }
+            Wire.read();
         }
+    }
 }

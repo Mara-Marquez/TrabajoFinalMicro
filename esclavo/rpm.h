@@ -5,13 +5,17 @@
 
 class SensorRPM {
   private:
+    int pinLedIR;
     int pinSensor;
-    int numeroAspas;
+    int umbralLuz;
     unsigned long tiempoAnterior;
+    unsigned long intervaloVentana;
+    int contadorFlancos;
+    bool estadoAnteriorAlto;
     int rpmActual;
 
   public:
-    SensorRPM(int pin, int aspas);
+    SensorRPM(int pinLed, int pinAnalogico);
     void iniciar();
     int calcular();
 };
