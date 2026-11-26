@@ -3,12 +3,13 @@
 #include "potenciometro.h"
 #include "ventilador.h"
 #include <Wire.h>
+#include "Watchdog.h"
 
 //variables
 #define SLAVE_ADDR 8
 Temperatura sensorTemp(2);
 Potenciometro pot(A3);
-
+Watchdog watchdog;
 Ventilador ventilador(9);
 struct DatosSistema
 {
@@ -16,6 +17,7 @@ struct DatosSistema
     float setpoint;
     int rpm;
     int pwm;
+    bool ONOF;
 };
 DatosSistema datos;
 
@@ -35,13 +37,25 @@ pot.iniciar();
  
 ventilador.iniciar();
 
-  Serial.println("Esclavo iniciado");
-    
+  
+   watchdog.iniciar(); 
+   Serial.println("Esclavo iniciado");
 }
 void loop()
 {
+    watchdog.reset();
  float temperatura =
         sensorTemp.leer();
+
+ if (isnan(temperatura))
+{
+  Serial.println("Reiniciando");
+
+    delay(1000);
+
+    watchdog.reiniciarSistema();
+}
+
 float setpoint =
         pot.obtenerSetpoint();
 
@@ -55,12 +69,20 @@ Serial.print("Setpoint: ");
 Serial.println(setpoint);
 int porcentajePWM =
     (pwm * 100) / 255;
+    bool onof=false;
+if(porcentajePWM>0){
+onof=true;
+}
+else{
+    onof=false;
+}
 
 
 datos.temperatura = temperatura;
 datos.setpoint = setpoint;
 datos.rpm = 0;
 datos.pwm = porcentajePWM;
+datos.ONOF =onof;
 
 
 }

@@ -8,12 +8,9 @@ private:
 
 public:
     Potenciometro(int pin);
+     void iniciar();
 
-    void iniciar();
-
-    int obtenerValor();
-    int obtenerPWM();
-    int obtenerSetpoint();
+    float obtenerSetpoint();
 };
 
 #endif

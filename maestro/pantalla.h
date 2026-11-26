@@ -19,7 +19,8 @@ public:
         float temp,
         float setpoint,
         int rpm,
-        int pwm
+        int pwm,
+        bool onof
     );
 
     void mostrarError();

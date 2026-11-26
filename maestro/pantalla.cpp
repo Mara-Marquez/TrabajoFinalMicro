@@ -57,7 +57,8 @@ void Pantalla::mostrarDatos(
     float temp,
     float setpoint,
     int rpm,
-    int pwm)
+    int pwm,
+    bool onof)
 {
     display.clearDisplay();
 
@@ -82,6 +83,11 @@ void Pantalla::mostrarDatos(
 display.print("PWM:");
 display.print(pwm);
 display.println("%");
+
+display.setCursor(64,45);
+display.print("Estado:");
+display.println(onof);
+
 
     display.display();
 }

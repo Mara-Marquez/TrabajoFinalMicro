@@ -5,13 +5,11 @@
 
 class PWM
 {
-private:
-    int pinPWM;
-
 public:
-    PWM(int pin);
+
     void iniciar();
-    void setDuty(int duty);
+
+    void setDuty(uint8_t duty);
 };
 
 #endif

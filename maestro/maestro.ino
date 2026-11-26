@@ -9,6 +9,7 @@ struct DatosSistema
     float setpoint;
     int rpm;
     int pwm;
+    bool onof;
 };
 
 DatosSistema datos;
@@ -17,12 +18,16 @@ Pantalla pantalla;
 
 void solicitarDatos()
 {
-    Wire.requestFrom(
-        SLAVE_ADDR,
-        sizeof(DatosSistema)
-    );
+    int recibidos =
+        Wire.requestFrom(
+            SLAVE_ADDR,
+            sizeof(DatosSistema)
+        );
 
-    if (Wire.available() >= sizeof(DatosSistema))
+    Serial.print("Bytes recibidos: ");
+    Serial.println(recibidos);
+
+    if (recibidos == sizeof(DatosSistema))
     {
         Wire.readBytes(
             (char*)&datos,
@@ -90,7 +95,8 @@ void loop()
         datos.temperatura,
         datos.setpoint,
         datos.rpm,
-        datos.pwm
+        datos.pwm,
+        datos.onof
     );
 
     // Calcula un nuevo setpoint
