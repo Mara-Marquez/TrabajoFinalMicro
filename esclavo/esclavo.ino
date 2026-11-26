@@ -2,9 +2,9 @@
 #include "dh11.h"
 #include "potenciometro.h"
 #include "ventilador.h"
+#include "rpm.h"
 #include <Wire.h>
 #include "Watchdog.h"
-#include <avr/interrupt.h>
 
 //variables
 #define SLAVE_ADDR 8
@@ -12,6 +12,7 @@ Temperatura sensorTemp(2);
 Potenciometro pot(A3);
 Watchdog watchdog;
 Ventilador ventilador(9);
+SensorRPM sensorRPM(4, 7);
 struct DatosSistema
 {
     float temperatura;
@@ -21,7 +22,7 @@ struct DatosSistema
     bool ONOF;
 };
 DatosSistema datos;
-
+bool modoManual = false;    
 
 
 void setup()
@@ -37,7 +38,7 @@ Wire.onRequest(requestEvent);
 pot.iniciar();
  
 ventilador.iniciar();
-
+sensorRPM.iniciar();
   
    watchdog.iniciar(); 
    Serial.println("Esclavo iniciado");
@@ -60,9 +61,15 @@ void loop()
 float setpoint =
         pot.obtenerSetpoint();
 
- int pwm = ventilador.controlar(temperatura, setpoint);
-
-
+ int pwm = 0;
+    if (modoManual)
+    {
+        pwm = ventilador.controlar(50.0, 10.0); 
+    }
+    else
+    {
+        pwm = ventilador.controlar(temperatura, setpoint);
+    }
 
 int porcentajePWM =
     (pwm * 100) / 255;
@@ -73,14 +80,13 @@ onof=true;
 else{
     onof=false;
 }
-cli();
 
 datos.temperatura = temperatura;
 datos.setpoint = setpoint;
-datos.rpm = 0;
+datos.rpm = sensorRPM.calcular(); //Aqui va la lectura de RPM cuando este el sensor IR
 datos.pwm = porcentajePWM;
 datos.ONOF =onof;
-sei();
+
 
 }
 
@@ -91,32 +97,27 @@ void requestEvent()
         (byte*)&datos,
         sizeof(DatosSistema)
     );
-/*
-    Serial.print("Enviado -> ");
-    Serial.print(datos.temperatura);
-    Serial.print(" ");
-    Serial.print(datos.setpoint);
-    Serial.print(" ");
-    Serial.print(datos.rpm);
-    Serial.print(" ");
-    Serial.println(datos.pwm);
-    */
 }
 
 void receiveEvent(int bytes)
 {
-    if(bytes == sizeof(float))
+    if(bytes == sizeof(bool))
     {
-        float nuevoSP;
-
         Wire.readBytes(
-            (char*)&nuevoSP,
-            sizeof(float)
+            (char*)&modoManual,
+            sizeof(bool)
         );
 
-        datos.setpoint = nuevoSP;
-
-       // Serial.print("Nuevo Setpoint: ");
-      //  Serial.println(datos.setpoint);
+        Serial.print("Modo Manual: ");
+        Serial.println(modoManual ? "ACTIVADO (Forzado ON)" : "DESACTIVADO (Automatico)");
+    
     }
+        else
+        {
+            // Limpia cualquier byte extra del buffer I2C para que nunca se bloquee
+            while (Wire.available())
+            {
+                Wire.read();
+            }
+        }
 }

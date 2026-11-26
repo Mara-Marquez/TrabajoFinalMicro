@@ -13,8 +13,8 @@ struct DatosSistema
 };
 
 DatosSistema datos;
-String command;
 Pantalla pantalla;
+
 
 void solicitarDatos()
 {
@@ -23,9 +23,6 @@ void solicitarDatos()
             SLAVE_ADDR,
             sizeof(DatosSistema)
         );
-
-   // Serial.print("Bytes recibidos: ");
-   // Serial.println(recibidos);
 
     if (recibidos == sizeof(DatosSistema))
     {
@@ -48,10 +45,20 @@ void enviarSetpoint(float nuevoSP)
     Wire.endTransmission();
 }
 
+void enviarOnOff(bool estado)
+{
+    Wire.beginTransmission(SLAVE_ADDR);
+
+    Wire.write(
+        (byte*)&estado,
+        sizeof(bool)
+    );
+
+    Wire.endTransmission();
+}
+
 void mostrarSerial()
 {
-    String estado="";
-     Serial.println("-------------------------");
     Serial.print("Temp: ");
     Serial.print(datos.temperatura);
 
@@ -63,16 +70,9 @@ void mostrarSerial()
 
     Serial.print(" PWM: ");
     Serial.print(datos.pwm);
-if(datos.onof){
-    estado="ON";
 
-}else{ estado="OFF"; }
-     
-
-     Serial.print(" Estado: ");
-
-    Serial.println(estado);
-    Serial.println("-------------------------");
+    Serial.print(" ONOF: ");
+    Serial.println(datos.onof ? "ON" : "OFF");
 }
 
 void setup()
@@ -92,16 +92,34 @@ void setup()
         "Iniciando"
     );
 
-    delay(200);
+    delay(2000);
 }
 
 void loop()
 {
+
+    if (Serial.available() > 0)
+    {
+        char tecla = Serial.read();
+
+        if (tecla == 'A' || tecla == 'a')
+        {
+            solicitarDatos();
+            mostrarSerial();
+        }
+        else if (tecla == 'E' || tecla == 'e')
+        {
+            enviarOnOff(true);
+            Serial.println("ON");
+        }
+        else if (tecla == 'O' || tecla == 'o')
+        {
+            enviarOnOff(false);
+            Serial.println("OFF");
+        }
+    }
     // Recibe datos actuales del esclavo
     solicitarDatos();
-
-    // Los muestra
-   // mostrarSerial();
 
     pantalla.mostrarDatos(
         datos.temperatura,
@@ -111,23 +129,5 @@ void loop()
         datos.onof
     );
 
-   
-
-    // Lo envía al esclavo
-if (Serial.available())
-	{
-    	command = Serial.readStringUntil('\n');
-    	command.trim();
-    	if (command.equalsIgnoreCase("A"))
-    	{
-        	solicitarDatos();
-        	mostrarSerial();
-    	}
-	}
-	
-
-
-    
-
-   
+    delay(150);
 }
