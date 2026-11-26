@@ -24,7 +24,7 @@ struct DatosSistema
 };
 
 DatosSistema datos;
-bool = false;    
+bool modoManual= false;    
 
 void setup()
 {
@@ -69,19 +69,20 @@ void loop()
 
     int porcentajePWM = (pwm * 100) / 255;
     bool onof = (porcentajePWM > 0);
-
+     noInterrupts();
     datos.temperatura = temperatura;
     datos.setpoint = setpoint;
     datos.rpm = sensorRPM.calcular();
     datos.pwm = porcentajePWM;
     datos.ONOF = onof;
+    interrupts();
 }
 
 void requestEvent()
 {
     Wire.write(
-        (byte*)&datos,
-        sizeof(DatosSistema)
+        (uint8_t*)&datos,
+        sizeof(datos)
     );
 }
 
